@@ -1,14 +1,27 @@
-version: '2'
+version: '3.2'
 services:
+  db:
+    image: mysql:latest # https://hub.docker.com/_/mysql/ - or mariadb https://hub.docker.com/_/mariadb
+    ports:
+      - 107.191.42.27:3306:3306 # change ip if required
+    volumes:
+      - ./wp-data:/docker-entrypoint-initdb.d
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_ROOT_PASSWORD: password
+    networks:
+      - wordpress-network
+
   wordpress:
     image: wordpress:latest # https://hub.docker.com/_/wordpress/
     ports:
-      - 127.0.0.1:80:80 # change ip if required
+      - 107.191.42.27:80:80 # change ip if required
     volumes:
       - ./config/php.conf.uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
       - ./wp-app:/var/www/html # Full wordpress project
-      #- ./plugin-name/trunk/:/var/www/html/wp-content/plugins/plugin-name # Plugin development
-      #- ./theme-name/trunk/:/var/www/html/wp-content/themes/theme-name # Theme development
+      # - ./wp-app/wp-content/plugins/:/var/www/html/wp-content/plugins
+      # - ./wp-app/wp-content/themes/:/var/www/html/wp-content/themes
+      # - ./page-builder-framework/trunk/:/var/www/html/wp-content/themes/page-builder-framework # Theme development
     environment:
       WORDPRESS_DB_HOST: db
       WORDPRESS_DB_NAME: wordpress
@@ -18,17 +31,20 @@ services:
       - db
     networks:
       - wordpress-network
-  db:
-    image: mysql:latest # https://hub.docker.com/_/mysql/ - or mariadb https://hub.docker.com/_/mariadb
+
+  phpmyadmin:
+    depends_on:
+      - db
+    image: phpmyadmin/phpmyadmin
+    restart: always
     ports:
-      - 127.0.0.1:3306:3306 # change ip if required
-    volumes:
-      - ./wp-data:/docker-entrypoint-initdb.d
+      - 107.191.42.27:8080:80
     environment:
-      MYSQL_DATABASE: wordpress
+      PMA_HOST: db
       MYSQL_ROOT_PASSWORD: password
     networks:
       - wordpress-network
+
 networks:
   wordpress-network:
       driver: bridge
